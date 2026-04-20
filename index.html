@@ -1,138 +1,105 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Telegram King Clicker</title>
     <script src="https://telegram.org"></script>
     <style>
-        :root {
-            --main-color: #f39c12;
-        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
             margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-evenly;
+            justify-content: center;
             height: 100vh;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            font-family: sans-serif;
             overflow: hidden;
-            text-align: center;
         }
-        #status-box {
+        #info {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #f39c12;
             font-weight: bold;
-            font-size: 1.2rem;
-            color: var(--main-color);
-            padding: 10px;
-            border: 2px solid var(--main-color);
-            border-radius: 15px;
-        }
-        #crown {
-            font-size: 100px;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.1s;
-        }
-        #crown:active {
-            transform: scale(0.9);
         }
         #score {
-            font-size: 2.5rem;
-            margin: 10px 0;
+            font-size: 48px;
+            margin-bottom: 20px;
         }
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 80%;
+        #crown {
+            font-size: 150px;
+            cursor: pointer;
+            transition: transform 0.05s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #crown:active {
+            transform: scale(0.95);
         }
         button {
-            padding: 15px;
+            margin-top: 40px;
+            padding: 15px 25px;
             border-radius: 12px;
             border: none;
-            background-color: var(--tg-theme-button-color, #3498db);
+            background: var(--tg-theme-button-color, #3498db);
             color: var(--tg-theme-button-text-color, #fff);
             font-weight: bold;
-            cursor: pointer;
-        }
-        .buy-btn {
-            background-color: #27ae60;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-
-    <div id="status-box">Твой статус: <span id="status">Загрузка...</span></div>
-
+    <div id="info">Статус: <span id="status">...</span></div>
     <div id="score">0</div>
-
     <div id="crown">👑</div>
-
-    <div class="btn-group">
-        <button id="invite-btn">Пригласить друга (в список)</button>
-        <button id="buy-btn" class="buy-btn">Купить статус "KING" (Stars)</button>
-    </div>
+    <button onclick="buy()">Стать KING</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        let score = 0;
+        let status = "Крестьянин";
 
-        let clicks = 0;
-        let userStatus = "Новичок";
+        const scoreDisp = document.getElementById('score');
+        const statusDisp = document.getElementById('status');
 
-        const scoreEl = document.getElementById('score');
-        const statusEl = document.getElementById('status');
-        const crownEl = document.getElementById('crown');
-
-        // 1. Загрузка данных из CloudStorage Telegram
-        tg.CloudStorage.getItems(['clicks', 'status'], (err, values) => {
-            if (!err) {
-                clicks = parseInt(values.clicks) || 0;
-                userStatus = values.status || "Крестьянин";
-                updateUI();
-            }
-        });
-
-        function updateUI() {
-            scoreEl.innerText = clicks;
-            statusEl.innerText = userStatus;
+        function update() {
+            scoreDisp.innerText = score;
+            statusDisp.innerText = status;
         }
 
-        // 2. Клик по короне
-        crownEl.addEventListener('click', () => {
-            clicks++;
-            updateUI();
-            tg.HapticFeedback.impactOccurred('medium'); // Вибрация
-            
-            // Сохраняем каждые 5 кликов, чтобы не спамить запросами
-            if (clicks % 5 === 0) {
-                tg.CloudStorage.setItem('clicks', clicks.toString());
-            }
-        });
+        function load() {
+            tg.CloudStorage.getItems(['s', 't'], (err, val) => {
+                if (!err) {
+                    score = parseInt(val.s) || 0;
+                    status = val.t || "Крестьянин";
+                }
+                update();
+            });
+        }
 
-        // 3. Инвайт друзей (через Inline Mode)
-        document.getElementById('invite-btn').addEventListener('click', () => {
-            tg.switchInlineQuery("Попробуй перекликнуть меня! Я уже " + userStatus, ["users"]);
-        });
+        document.getElementById('crown').onclick = () => {
+            score++;
+            update();
+            tg.HapticFeedback.impactOccurred('light');
+            if (score % 10 === 0) tg.CloudStorage.setItem('s', score.toString());
+        };
 
-        // 4. "Покупка" статуса (имитация через Stars)
-        document.getElementById('buy-btn').addEventListener('click', () => {
-            // В реальном приложении тут вызывается метод оплаты. 
-            // Сейчас просто сменим статус для примера.
-            tg.showConfirm("Хотите купить статус KING за 50 Stars?", (ok) => {
+        function buy() {
+            tg.showConfirm("Купить KING статус?", (ok) => {
                 if (ok) {
-                    userStatus = "👑 TRUE KING";
-                    tg.CloudStorage.setItem('status', userStatus);
-                    updateUI();
-                    tg.showAlert("Поздравляем! Теперь вы Король!");
+                    status = "👑 TRUE KING";
+                    tg.CloudStorage.setItem('t', status);
+                    update();
+                    tg.showAlert("Вы теперь Король!");
                 }
             });
-        });
+        }
 
+        tg.ready();
+        tg.expand();
+        load();
     </script>
 </body>
 </html>
