@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -22,8 +23,15 @@
             overflow: hidden; 
             user-select: none; 
             -webkit-user-select: none; 
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             position: relative;
+        }
+        button, .crown, .status-card {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            border: none;
         }
         body::before {
             content: '';
@@ -55,6 +63,7 @@
             transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
             position: relative;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         .tab::before {
             content: '';
@@ -121,6 +130,9 @@
             margin-bottom: 50px;
             filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
             position: relative;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
         .crown:active { 
             transform: scale(0.88) rotate(5deg); 
@@ -173,6 +185,8 @@
             height: 68px;
             position: relative;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         .btn::before {
             content: '';
@@ -225,6 +239,8 @@
             border: 2px solid rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         .status-card::before {
             content: '';
@@ -324,7 +340,7 @@
                 <div class="status" id="status">Крестьянин</div>
                 <div class="score" id="score">0</div>
                 <div class="total-score" id="totalScore">Всего кликов: 0</div>
-                <div class="crown" id="crown">👑</div>
+                <div class="crown" id="crown" touch-action="manipulation">👑</div>
                 <div class="buttons">
                     <button class="btn random-btn" id="randomBtn">🎲 Рандом статус</button>
                     <button class="btn donate-btn" id="donateBtn">⭐ Звезды (<span id="starsCount">0</span> ⭐)</button>
@@ -384,7 +400,6 @@
                 if (this.tg) {
                     this.tg.ready();
                     this.tg.expand();
-                    this.tg.requestViewport();
                 }
 
                 this.elements = {
@@ -414,20 +429,71 @@
             }
 
             bindEvents() {
-                this.elements.crown.onclick = (e) => this.clickCrown(e);
+                // Universal click handler for crown - работает и на PC и на мобильных
+                const crown = this.elements.crown;
+                const self = this;
+
+                // Mouse events
+                crown.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    self.handleCrownClick(e);
+                });
+                crown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                // Touch events с мультитачем
+                let activeTouches = 0;
+                crown.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    activeTouches = e.touches.length;
+                    if (activeTouches >= 1) {
+                        self.handleCrownClick(e.touches[0]);
+                    }
+                }, { passive: false });
+
+                crown.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    if (activeTouches >= 2) {
+                        self.multiClick();
+                    }
+                    activeTouches = 0;
+                }, { passive: false });
+
+                // Остальные кнопки
                 this.elements.randomBtn.onclick = () => this.randomStatus();
                 this.elements.donateBtn.onclick = () => this.donateStars();
                 this.elements.prestigeBtn.onclick = () => this.quickPrestige();
                 this.elements.claimPrestige.onclick = () => this.claimPrestige();
                 this.elements.tabs.forEach(tab => tab.onclick = (e) => this.switchTab(e));
+            }
+
+            handleCrownClick(touchEvent) {
+                const multiplier = this.getMultiplier();
+                const clickValue = Math.floor(multiplier);
+                this.score += clickValue;
+                this.totalClicks += 1;
                 
-                // Multi-touch support
-                let touchCount = 0;
-                this.elements.crown.ontouchstart = () => touchCount++;
-                this.elements.crown.ontouchend = () => {
-                    if (touchCount > 1) this.multiClick();
-                    touchCount = 0;
-                };
+                this.elements.crown.classList.add('clicked');
+                setTimeout(() => this.elements.crown.classList.remove('clicked'), 250);
+
+                // Particles
+                const rect = this.elements.crown.getBoundingClientRect();
+                const clientX = touchEvent.clientX || rect.left + rect.width / 2;
+                const clientY = touchEvent.clientY || rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => this.createParticle(clientX, clientY), i * 50);
+                }
+
+                if (this.tg?.HapticFeedback) {
+                    this.tg.HapticFeedback.impactOccurred('heavy');
+                }
+
+                this.checkAchievements();
+                this.updateUI();
+                this.saveData();
             }
 
             switchTab(e) {
@@ -496,45 +562,22 @@
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 particle.innerHTML = emoji;
-                particle.style.left = x + 'px';
-                particle.style.top = y + 'px';
+                particle.style.left = (x - 12) + 'px';
+                particle.style.top = (y - 12) + 'px';
+                particle.style.fontSize = '28px';
                 this.elements.particles.appendChild(particle);
-                setTimeout(() => particle.remove(), 1000);
-            }
-
-            clickCrown(e) {
-                e.preventDefault();
-                const multiplier = this.getMultiplier();
-                const clickValue = Math.floor(multiplier);
-                this.score += clickValue;
-                this.totalClicks += 1;
-                
-                this.elements.crown.classList.add('clicked');
-                setTimeout(() => this.elements.crown.classList.remove('clicked'), 250);
-
-                // Particles
-                const rect = this.elements.crown.getBoundingClientRect();
-                const x = e.clientX || rect.left + rect.width / 2;
-                const y = e.clientY || rect.top + rect.height / 2;
-                for (let i = 0; i < 8; i++) {
-                    setTimeout(() => this.createParticle(x, y), i * 50);
-                }
-
-                if (this.tg?.HapticFeedback) {
-                    this.tg.HapticFeedback.impactOccurred('heavy');
-                }
-
-                this.checkAchievements();
-                this.updateUI();
-                this.saveData();
+                setTimeout(() => {
+                    if (particle.parentNode) particle.remove();
+                }, 1000);
             }
 
             multiClick() {
-                for (let i = 0; i < 5; i++) {
+                const multiplier = this.getMultiplier();
+                for (let i = 0; i < 10; i++) {
                     setTimeout(() => {
-                        const multiplier = this.getMultiplier();
-                        this.score += Math.floor(multiplier * 0.5);
-                    }, i * 100);
+                        this.score += Math.floor(multiplier * 0.3);
+                        this.totalClicks += 1;
+                    }, i * 30);
                 }
                 if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
                 this.updateUI();
@@ -560,7 +603,9 @@
                 setTimeout(() => {
                     popup.style.animation = 'none';
                     popup.style.transform = 'translate(-50%, -50%) scale(0)';
-                    setTimeout(() => document.body.removeChild(popup), 300);
+                    setTimeout(() => {
+                        if (popup.parentNode) document.body.removeChild(popup);
+                    }, 300);
                 }, 3000);
             }
 
@@ -569,7 +614,7 @@
                 if (available.length > 1) {
                     const random = available[Math.floor(Math.random() * available.length)];
                     this.status = random.name;
-                    this.createParticle(50, 50, '🎲');
+                    this.createParticle(window.innerWidth/2, 100, '🎲');
                     if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
                     this.updateUI();
                     this.saveData();
@@ -580,7 +625,7 @@
                 if (this.stars >= 100) {
                     this.status = '⭐ Звездный Император';
                     this.stars -= 100;
-                    this.createParticle(50, 100, '⭐');
+                    this.createParticle(window.innerWidth/2, 150, '⭐');
                     if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
                     this.updateUI();
                     this.saveData();
@@ -621,14 +666,16 @@
                         <div class="status-price ${!canBuy ? 'locked' : ''}">
                             ${isActive ? '✅ Активно' : `${status.price.toLocaleString()} 👑`}
                         </div>
-                        ${!isActive ? `<div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>` : ''}
+                        ${!isActive && status.price > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>` : ''}
                     `;
                     
-                    card.onclick = () => {
+                    card.onclick = (e) => {
+                        e.preventDefault();
                         if (canBuy && !isActive) {
                             this.score -= status.price;
                             this.status = status.name;
-                            this.createParticle(card.offsetLeft + card.offsetWidth/2, card.offsetTop + 50, status.emoji);
+                            const rect = card.getBoundingClientRect();
+                            this.createParticle(rect.left + rect.width/2, rect.top + 50, status.emoji);
                             if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
                             this.updateUI();
                             this.saveData();
@@ -639,16 +686,16 @@
             }
 
             updateUI() {
-                this.elements.score.textContent = this.score.toLocaleString();
+                this.elements.score.textContent = Math.floor(this.score).toLocaleString();
                 this.elements.status.textContent = this.status;
                 this.elements.totalScore.textContent = `Всего кликов: ${this.totalClicks.toLocaleString()}`;
                 this.elements.starsCount.textContent = this.stars;
                 
                 // Prestige UI
                 this.elements.prestigeLevel.textContent = this.prestigeLevel;
-                this.elements.prestigeMultiplier.textContent = `x${this.prestigeMultiplier}`;
+                this.elements.prestigeMultiplier.textContent = `x${this.prestigeMultiplier.toFixed(0)}`;
                 const nextPrestige = 1000000 * Math.pow(1.5, this.prestigeLevel);
-                this.elements.prestigeProgress.textContent = `${this.totalClicks.toLocaleString()} / ${nextPrestige.toLocaleString()} кликов`;
+                this.elements.prestigeProgress.textContent = `${this.totalClicks.toLocaleString()} / ${Math.floor(nextPrestige).toLocaleString()} кликов`;
                 const progress = Math.min((this.totalClicks / nextPrestige) * 100, 100);
                 this.elements.prestigeProgressBar.style.width = progress + '%';
                 this.elements.prestigeBtn.style.display = this.totalClicks >= nextPrestige ? 'block' : 'none';
@@ -657,8 +704,16 @@
             }
         }
 
-        window.Telegram?.WebApp?.ready();
-        new KingClickerElite();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.Telegram?.WebApp?.ready();
+                new KingClickerElite();
+            });
+        } else {
+            window.Telegram?.WebApp?.ready();
+            new KingClickerElite();
+        }
     </script>
 </body>
 </html>
+```
