@@ -12,55 +12,67 @@
             background: var(--tg-theme-bg-color, #fff); 
             color: var(--tg-theme-text-color, #000); 
             height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
             overflow: hidden; 
             user-select: none; 
             -webkit-user-select: none; 
             touch-action: manipulation; 
         }
-        .header { text-align: center; margin-bottom: 20px; }
-        .status { font-size: 28px; font-weight: bold; margin-bottom: 10px; min-height: 36px; }
-        .score { font-size: 52px; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 30px; }
-        .crown { font-size: 140px; cursor: pointer; transition: transform 0.08s cubic-bezier(0.25,0.46,0.45,0.94); display: block; margin-bottom: 30px; }
-        .crown:active { transform: scale(0.92); }
-        .crown.clicked { animation: pulse 0.15s cubic-bezier(0.25,0.46,0.45,0.94); }
-        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(0.88);} }
-        .buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; padding: 0 20px; }
-        .btn { background: linear-gradient(145deg, var(--tg-theme-button-color, #0088cc), var(--tg-theme-button-color-active, #006ba3)); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 16px; padding: 16px 24px; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: all 0.2s ease; height: 56px; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .tabs { display: flex; height: 56px; background: rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .tab { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; cursor: pointer; padding: 0 16px; transition: all 0.2s; }
+        .tab.active { background: var(--tg-theme-button-color, #0088cc); color: var(--tg-theme-button-text-color, #fff); }
+        .content { height: calc(100vh - 56px); overflow-y: auto; }
+        .clicker-tab { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; text-align: center; }
+        .shop-tab { padding: 20px; }
+        .status { font-size: 28px; font-weight: bold; margin-bottom: 12px; min-height: 36px; }
+        .score { font-size: 56px; font-weight: 900; text-shadow: 2px 2px 6px rgba(0,0,0,0.3); margin-bottom: 8px; }
+        .total-score { font-size: 18px; color: var(--tg-theme-hint-color, #666); margin-bottom: 40px; }
+        .crown { font-size: 160px; cursor: pointer; transition: transform 0.08s cubic-bezier(0.25,0.46,0.45,0.94); display: block; margin-bottom: 40px; }
+        .crown:active { transform: scale(0.90); }
+        .crown.clicked { animation: pulse 0.18s cubic-bezier(0.25,0.46,0.45,0.94); }
+        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(0.85);} }
+        .buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
+        .btn { background: linear-gradient(145deg, var(--tg-theme-button-color, #0088cc), var(--tg-theme-button-color-active, #006ba3)); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 16px; padding: 18px 24px; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); transition: all 0.2s ease; height: 60px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
         .btn:active { transform: translateY(0); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .shop-btn { background: linear-gradient(145deg, #ff6b6b, #ee5a52); }
+        .random-btn { background: linear-gradient(145deg, #ff6b6b, #ee5a52); }
         .donate-btn { background: linear-gradient(145deg, #ffd93d, #ffc107); color: #000; }
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: var(--tg-theme-bg-color, #fff); border-radius: 20px; padding: 30px; max-width: 90vw; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .close { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--tg-theme-hint-color, #999); }
-        .status-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        .status-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(0,0,0,0.05); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
-        .status-item:hover { background: rgba(0,0,0,0.1); transform: translateX(4px); }
-        .status-item.active { background: linear-gradient(90deg, #ffd700, #ffed4e); }
-        @media (max-width: 480px) { .score { font-size: 42px; } .crown { font-size: 110px; } .status { font-size: 24px; } }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-top: 20px; }
+        .status-card { background: rgba(0,0,0,0.05); border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .status-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .status-card.active { border-color: #ffd700; background: linear-gradient(145deg, rgba(255,215,0,0.1), rgba(255,215,0,0.2)); }
+        .status-emoji { font-size: 36px; margin-bottom: 8px; }
+        .status-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+        .status-price { font-size: 16px; color: #00cc88; font-weight: 600; }
+        .status-price.locked { color: #ff6b6b; }
+        @media (max-width: 480px) { .score { font-size: 44px; } .crown { font-size: 120px; } .status { font-size: 24px; } .shop-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="status" id="status">Крестьянин</div>
-        <div class="score" id="score">0</div>
+    <div class="tabs">
+        <div class="tab active" data-tab="clicker">👑 Кликер</div>
+        <div class="tab" data-tab="shop">🛒 Статусы</div>
     </div>
-    <div class="crown" id="crown">👑</div>
-    <div class="buttons">
-        <button class="btn shop-btn" id="shopBtn">🛒 Магазин статусов</button>
-        <button class="btn donate-btn" id="donateBtn">⭐ Купить звездами (69 ⭐)</button>
-    </div>
-
-    <div id="shopModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close" id="closeShop">&times;</span>
-            <h2 style="text-align:center;margin-bottom:20px;font-size:24px;">🛒 Магазин статусов</h2>
-            <div class="status-list" id="statusList"></div>
+    <div class="content">
+        <div id="clicker-tab" class="tab-content active">
+            <div class="clicker-tab">
+                <div class="status" id="status">Крестьянин</div>
+                <div class="score" id="score">0</div>
+                <div class="total-score" id="totalScore">Всего кликов: 0</div>
+                <div class="crown" id="crown">👑</div>
+                <div class="buttons">
+                    <button class="btn random-btn" id="randomBtn">🎲 Рандом статус</button>
+                    <button class="btn donate-btn" id="donateBtn">⭐ Звезды (<span id="starsCount">0</span> ⭐)</button>
+                </div>
+            </div>
+        </div>
+        <div id="shop-tab" class="tab-content">
+            <div class="shop-tab">
+                <h2 style="font-size:24px;margin-bottom:20px;text-align:center;">Выбери свой статус</h2>
+                <div class="shop-grid" id="statusGrid"></div>
+            </div>
         </div>
     </div>
 
@@ -68,15 +80,23 @@
         class KingClicker {
             constructor() {
                 this.score = 0;
+                this.totalClicks = 0;
                 this.status = 'Крестьянин';
                 this.stars = 0;
-                this.statuses = {
-                    'Крестьянин': { emoji: '', price: 0, desc: 'Обычный статус' },
-                    '⚔️ Воин': { emoji: '⚔️', price: 100, desc: '+2 очка за клик' },
-                    '👑 Король': { emoji: '👑', price: 500, desc: '+5 очков за клик' },
-                    '💎 Алмаз': { emoji: '💎', price: 1500, desc: '+10 очков за клик' },
-                    '🔥 Легенда': { emoji: '🔥', price: 5000, desc: '+25 очков за клик' }
-                };
+                this.statuses = [
+                    {name:'Крестьянин', emoji:'🌾', price:0, multiplier:1},
+                    {name:'⚔️ Воин', emoji:'⚔️', price:150, multiplier:2},
+                    {name:'🛡️ Рыцарь', emoji:'🛡️', price:350, multiplier:3},
+                    {name:'👑 Король', emoji:'👑', price:750, multiplier:5},
+                    {name:'💎 Алмаз', emoji:'💎', price:1500, multiplier:10},
+                    {name:'🔥 Легенда', emoji:'🔥', price:3000, multiplier:20},
+                    {name:'🌟 Миф', emoji:'🌟', price:5000, multiplier:30},
+                    {name:'⚡ Бог', emoji:'⚡', price:10000, multiplier:50},
+                    {name:'🌀 Вихрь', emoji:'🌀', price:25000, multiplier:75},
+                    {name:'🌌 Космос', emoji:'🌌', price:50000, multiplier:100},
+                    {name:'⭐ Император', emoji:'⭐', price:100000, multiplier:150},
+                    {name:'💀 Король Мира', emoji:'💀', price:250000, multiplier:250}
+                ];
                 this.init();
             }
 
@@ -86,134 +106,141 @@
                 this.tg.expand();
 
                 this.elements = {
+                    tabs: document.querySelectorAll('.tab'),
+                    tabContents: document.querySelectorAll('.tab-content'),
                     status: document.getElementById('status'),
                     score: document.getElementById('score'),
+                    totalScore: document.getElementById('totalScore'),
                     crown: document.getElementById('crown'),
-                    shopBtn: document.getElementById('shopBtn'),
+                    randomBtn: document.getElementById('randomBtn'),
                     donateBtn: document.getElementById('donateBtn'),
-                    shopModal: document.getElementById('shopModal'),
-                    closeShop: document.getElementById('closeShop'),
-                    statusList: document.getElementById('statusList')
+                    starsCount: document.getElementById('starsCount'),
+                    statusGrid: document.getElementById('statusGrid')
                 };
 
                 this.loadData();
                 this.bindEvents();
+                this.renderShop();
                 this.updateUI();
             }
 
             bindEvents() {
                 this.elements.crown.onclick = () => this.clickCrown();
-                this.elements.shopBtn.onclick = () => this.showShop();
+                this.elements.randomBtn.onclick = () => this.randomStatus();
                 this.elements.donateBtn.onclick = () => this.donateStars();
-                this.elements.closeShop.onclick = () => this.hideShop();
-                this.elements.shopModal.onclick = (e) => { if (e.target === this.elements.shopModal) this.hideShop(); };
-                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.hideShop(); });
+                this.elements.tabs.forEach(tab => tab.onclick = (e) => this.switchTab(e));
+            }
+
+            switchTab(e) {
+                const tab = e.currentTarget;
+                const target = tab.dataset.tab;
+                this.elements.tabs.forEach(t => t.classList.remove('active'));
+                this.elements.tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(target + '-tab').classList.add('active');
             }
 
             async loadData() {
                 try {
                     if (this.tg.CloudStorage) {
-                        const data = await this.tg.CloudStorage.get(['score', 'status', 'stars']);
+                        const data = await this.tg.CloudStorage.get(['score','totalClicks','status','stars']);
                         this.score = parseInt(data.score || 0);
+                        this.totalClicks = parseInt(data.totalClicks || 0);
                         this.status = data.status || 'Крестьянин';
                         this.stars = parseInt(data.stars || 0);
                     }
                 } catch (e) {
-                    const lsScore = localStorage.getItem('score');
-                    const lsStatus = localStorage.getItem('status');
-                    const lsStars = localStorage.getItem('stars');
-                    this.score = parseInt(lsScore || 0);
-                    this.status = lsStatus || 'Крестьянин';
-                    this.stars = parseInt(lsStars || 0);
+                    this.score = parseInt(localStorage.getItem('score') || 0);
+                    this.totalClicks = parseInt(localStorage.getItem('totalClicks') || 0);
+                    this.status = localStorage.getItem('status') || 'Крестьянин';
+                    this.stars = parseInt(localStorage.getItem('stars') || 0);
                 }
             }
 
             async saveData() {
-                const data = { score: this.score, status: this.status, stars: this.stars };
+                const data = {score:this.score,totalClicks:this.totalClicks,status:this.status,stars:this.stars};
                 try {
-                    if (this.tg.CloudStorage) {
-                        await this.tg.CloudStorage.set(data);
-                    } else {
-                        localStorage.setItem('score', data.score);
-                        localStorage.setItem('status', data.status);
-                        localStorage.setItem('stars', data.stars);
+                    if (this.tg.CloudStorage) await this.tg.CloudStorage.set(data);
+                    else {
+                        localStorage.setItem('score',data.score);
+                        localStorage.setItem('totalClicks',data.totalClicks);
+                        localStorage.setItem('status',data.status);
+                        localStorage.setItem('stars',data.stars);
                     }
                 } catch (e) {}
             }
 
             getMultiplier() {
-                const multipliers = { 'Крестьянин': 1, '⚔️ Воин': 2, '👑 Король': 5, '💎 Алмаз': 10, '🔥 Легенда': 25 };
-                return multipliers[this.status] || 1;
+                const status = this.statuses.find(s => s.name === this.status);
+                return status ? status.multiplier : 1;
             }
 
             clickCrown() {
                 const multiplier = this.getMultiplier();
                 this.score += multiplier;
+                this.totalClicks += 1;
                 this.elements.crown.classList.add('clicked');
-                setTimeout(() => this.elements.crown.classList.remove('clicked'), 150);
-
+                setTimeout(()=>this.elements.crown.classList.remove('clicked'),180);
                 if (this.tg.HapticFeedback) this.tg.HapticFeedback.impactOccurred('medium');
-
                 this.updateUI();
                 this.saveData();
             }
 
-            showShop() {
-                this.elements.statusList.innerHTML = '';
-                Object.entries(this.statuses).forEach(([name, info]) => {
-                    const canBuy = this.score >= info.price;
-                    const isActive = name === this.status;
-                    const div = document.createElement('div');
-                    div.className = `status-item ${isActive ? 'active' : ''}`;
-                    div.innerHTML = `
-                        <div>
-                            <div style="font-size:22px;font-weight:bold;">${info.emoji} ${name}</div>
-                            <div style="font-size:14px;color:var(--tg-theme-hint-color);">${info.desc}</div>
-                        </div>
-                        <div style="font-size:18px;font-weight:bold;color:${canBuy||isActive?'#00cc88':'#ff6b6b'}">
-                            ${isActive ? '✅' : `${info.price.toLocaleString()} 👑`}
-                        </div>
-                    `;
-                    div.onclick = () => this.buyStatus(name, info.price);
-                    this.elements.statusList.appendChild(div);
-                });
-                this.elements.shopModal.style.display = 'flex';
-            }
-
-            hideShop() {
-                this.elements.shopModal.style.display = 'none';
-            }
-
-            async buyStatus(name, price) {
-                if (this.status === name || this.score < price) return;
-                this.score -= price;
-                this.status = name;
-                if (this.tg.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
-                this.updateUI();
-                this.saveData();
-                this.hideShop();
-            }
-
-            async donateStars() {
-                if (this.stars >= 69) {
-                    this.status = '⭐ Звездный Король';
-                    this.stars -= 69;
+            randomStatus() {
+                const available = this.statuses.filter(s => this.score >= s.price);
+                if (available.length > 1) {
+                    const random = available[Math.floor(Math.random() * available.length)];
+                    this.status = random.name;
                     if (this.tg.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
                     this.updateUI();
                     this.saveData();
-                    return;
                 }
-                if (this.tg.showInvoice) {
-                    await this.tg.showInvoice('Купить статус ⭐', 'star_king_status', 'PAYMENT_PROVIDER_TOKEN', 'RUB', 69);
-                } else {
-                    this.tg.showAlert('Донат звездами доступен в Telegram Premium');
+            }
+
+            donateStars() {
+                if (this.stars >= 50) {
+                    this.status = '⭐ Звездный Император';
+                    this.stars -= 50;
+                    if (this.tg.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                    this.updateUI();
+                    this.saveData();
                 }
+            }
+
+            renderShop() {
+                this.elements.statusGrid.innerHTML = '';
+                this.statuses.forEach(status => {
+                    const canBuy = this.score >= status.price;
+                    const isActive = status.name === this.status;
+                    const card = document.createElement('div');
+                    card.className = `status-card ${isActive ? 'active' : ''}`;
+                    card.innerHTML = `
+                        <div class="status-emoji">${status.emoji}</div>
+                        <div class="status-name">${status.name}</div>
+                        <div class="status-price ${!canBuy ? 'locked' : ''}">
+                            ${isActive ? '✅ Активно' : `${status.price.toLocaleString()} 👑`}
+                        </div>
+                    `;
+                    card.onclick = () => {
+                        if (canBuy && !isActive) {
+                            this.score -= status.price;
+                            this.status = status.name;
+                            if (this.tg.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                            this.updateUI();
+                            this.saveData();
+                            this.renderShop();
+                        }
+                    };
+                    this.elements.statusGrid.appendChild(card);
+                });
             }
 
             updateUI() {
                 this.elements.score.textContent = this.score.toLocaleString();
                 this.elements.status.textContent = this.status;
-                this.elements.donateBtn.textContent = `⭐ Купить звездами (${this.stars} ⭐)`;
+                this.elements.totalScore.textContent = `Всего кликов: ${this.totalClicks.toLocaleString()}`;
+                this.elements.starsCount.textContent = this.stars;
+                this.renderShop();
             }
         }
 
