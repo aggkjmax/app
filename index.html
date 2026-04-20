@@ -1,105 +1,224 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <script src="https://telegram.org"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👑 King Clicker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
-            font-family: sans-serif;
-            overflow: hidden;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: var(--tg-theme-bg-color, #fff); 
+            color: var(--tg-theme-text-color, #000); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            touch-action: manipulation; 
         }
-        #info {
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #f39c12;
-            font-weight: bold;
-        }
-        #score {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        #crown {
-            font-size: 150px;
-            cursor: pointer;
-            transition: transform 0.05s;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #crown:active {
-            transform: scale(0.95);
-        }
-        button {
-            margin-top: 40px;
-            padding: 15px 25px;
-            border-radius: 12px;
-            border: none;
-            background: var(--tg-theme-button-color, #3498db);
-            color: var(--tg-theme-button-text-color, #fff);
-            font-weight: bold;
-            font-size: 16px;
-        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .status { font-size: 28px; font-weight: bold; margin-bottom: 10px; min-height: 36px; }
+        .score { font-size: 52px; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 30px; }
+        .crown { font-size: 140px; cursor: pointer; transition: transform 0.08s cubic-bezier(0.25,0.46,0.45,0.94); display: block; margin-bottom: 30px; }
+        .crown:active { transform: scale(0.92); }
+        .crown.clicked { animation: pulse 0.15s cubic-bezier(0.25,0.46,0.45,0.94); }
+        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(0.88);} }
+        .buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; padding: 0 20px; }
+        .btn { background: linear-gradient(145deg, var(--tg-theme-button-color, #0088cc), var(--tg-theme-button-color-active, #006ba3)); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 16px; padding: 16px 24px; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: all 0.2s ease; height: 56px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .shop-btn { background: linear-gradient(145deg, #ff6b6b, #ee5a52); }
+        .donate-btn { background: linear-gradient(145deg, #ffd93d, #ffc107); color: #000; }
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--tg-theme-bg-color, #fff); border-radius: 20px; padding: 30px; max-width: 90vw; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .close { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--tg-theme-hint-color, #999); }
+        .status-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .status-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(0,0,0,0.05); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .status-item:hover { background: rgba(0,0,0,0.1); transform: translateX(4px); }
+        .status-item.active { background: linear-gradient(90deg, #ffd700, #ffed4e); }
+        @media (max-width: 480px) { .score { font-size: 42px; } .crown { font-size: 110px; } .status { font-size: 24px; } }
     </style>
 </head>
 <body>
-    <div id="info">Статус: <span id="status">...</span></div>
-    <div id="score">0</div>
-    <div id="crown">👑</div>
-    <button onclick="buy()">Стать KING</button>
+    <div class="header">
+        <div class="status" id="status">Крестьянин</div>
+        <div class="score" id="score">0</div>
+    </div>
+    <div class="crown" id="crown">👑</div>
+    <div class="buttons">
+        <button class="btn shop-btn" id="shopBtn">🛒 Магазин статусов</button>
+        <button class="btn donate-btn" id="donateBtn">⭐ Купить звездами (69 ⭐)</button>
+    </div>
+
+    <div id="shopModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="closeShop">&times;</span>
+            <h2 style="text-align:center;margin-bottom:20px;font-size:24px;">🛒 Магазин статусов</h2>
+            <div class="status-list" id="statusList"></div>
+        </div>
+    </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        let score = 0;
-        let status = "Крестьянин";
+        class KingClicker {
+            constructor() {
+                this.score = 0;
+                this.status = 'Крестьянин';
+                this.stars = 0;
+                this.statuses = {
+                    'Крестьянин': { emoji: '', price: 0, desc: 'Обычный статус' },
+                    '⚔️ Воин': { emoji: '⚔️', price: 100, desc: '+2 очка за клик' },
+                    '👑 Король': { emoji: '👑', price: 500, desc: '+5 очков за клик' },
+                    '💎 Алмаз': { emoji: '💎', price: 1500, desc: '+10 очков за клик' },
+                    '🔥 Легенда': { emoji: '🔥', price: 5000, desc: '+25 очков за клик' }
+                };
+                this.init();
+            }
 
-        const scoreDisp = document.getElementById('score');
-        const statusDisp = document.getElementById('status');
+            init() {
+                this.tg = window.Telegram.WebApp;
+                this.tg.ready();
+                this.tg.expand();
 
-        function update() {
-            scoreDisp.innerText = score;
-            statusDisp.innerText = status;
-        }
+                this.elements = {
+                    status: document.getElementById('status'),
+                    score: document.getElementById('score'),
+                    crown: document.getElementById('crown'),
+                    shopBtn: document.getElementById('shopBtn'),
+                    donateBtn: document.getElementById('donateBtn'),
+                    shopModal: document.getElementById('shopModal'),
+                    closeShop: document.getElementById('closeShop'),
+                    statusList: document.getElementById('statusList')
+                };
 
-        function load() {
-            tg.CloudStorage.getItems(['s', 't'], (err, val) => {
-                if (!err) {
-                    score = parseInt(val.s) || 0;
-                    status = val.t || "Крестьянин";
+                this.loadData();
+                this.bindEvents();
+                this.updateUI();
+            }
+
+            bindEvents() {
+                this.elements.crown.onclick = () => this.clickCrown();
+                this.elements.shopBtn.onclick = () => this.showShop();
+                this.elements.donateBtn.onclick = () => this.donateStars();
+                this.elements.closeShop.onclick = () => this.hideShop();
+                this.elements.shopModal.onclick = (e) => { if (e.target === this.elements.shopModal) this.hideShop(); };
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.hideShop(); });
+            }
+
+            async loadData() {
+                try {
+                    if (this.tg.CloudStorage) {
+                        const data = await this.tg.CloudStorage.get(['score', 'status', 'stars']);
+                        this.score = parseInt(data.score || 0);
+                        this.status = data.status || 'Крестьянин';
+                        this.stars = parseInt(data.stars || 0);
+                    }
+                } catch (e) {
+                    const lsScore = localStorage.getItem('score');
+                    const lsStatus = localStorage.getItem('status');
+                    const lsStars = localStorage.getItem('stars');
+                    this.score = parseInt(lsScore || 0);
+                    this.status = lsStatus || 'Крестьянин';
+                    this.stars = parseInt(lsStars || 0);
                 }
-                update();
-            });
-        }
+            }
 
-        document.getElementById('crown').onclick = () => {
-            score++;
-            update();
-            tg.HapticFeedback.impactOccurred('light');
-            if (score % 10 === 0) tg.CloudStorage.setItem('s', score.toString());
-        };
+            async saveData() {
+                const data = { score: this.score, status: this.status, stars: this.stars };
+                try {
+                    if (this.tg.CloudStorage) {
+                        await this.tg.CloudStorage.set(data);
+                    } else {
+                        localStorage.setItem('score', data.score);
+                        localStorage.setItem('status', data.status);
+                        localStorage.setItem('stars', data.stars);
+                    }
+                } catch (e) {}
+            }
 
-        function buy() {
-            tg.showConfirm("Купить KING статус?", (ok) => {
-                if (ok) {
-                    status = "👑 TRUE KING";
-                    tg.CloudStorage.setItem('t', status);
-                    update();
-                    tg.showAlert("Вы теперь Король!");
+            getMultiplier() {
+                const multipliers = { 'Крестьянин': 1, '⚔️ Воин': 2, '👑 Король': 5, '💎 Алмаз': 10, '🔥 Легенда': 25 };
+                return multipliers[this.status] || 1;
+            }
+
+            clickCrown() {
+                const multiplier = this.getMultiplier();
+                this.score += multiplier;
+                this.elements.crown.classList.add('clicked');
+                setTimeout(() => this.elements.crown.classList.remove('clicked'), 150);
+
+                if (this.tg.HapticFeedback) this.tg.HapticFeedback.impactOccurred('medium');
+
+                this.updateUI();
+                this.saveData();
+            }
+
+            showShop() {
+                this.elements.statusList.innerHTML = '';
+                Object.entries(this.statuses).forEach(([name, info]) => {
+                    const canBuy = this.score >= info.price;
+                    const isActive = name === this.status;
+                    const div = document.createElement('div');
+                    div.className = `status-item ${isActive ? 'active' : ''}`;
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-size:22px;font-weight:bold;">${info.emoji} ${name}</div>
+                            <div style="font-size:14px;color:var(--tg-theme-hint-color);">${info.desc}</div>
+                        </div>
+                        <div style="font-size:18px;font-weight:bold;color:${canBuy||isActive?'#00cc88':'#ff6b6b'}">
+                            ${isActive ? '✅' : `${info.price.toLocaleString()} 👑`}
+                        </div>
+                    `;
+                    div.onclick = () => this.buyStatus(name, info.price);
+                    this.elements.statusList.appendChild(div);
+                });
+                this.elements.shopModal.style.display = 'flex';
+            }
+
+            hideShop() {
+                this.elements.shopModal.style.display = 'none';
+            }
+
+            async buyStatus(name, price) {
+                if (this.status === name || this.score < price) return;
+                this.score -= price;
+                this.status = name;
+                if (this.tg.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                this.updateUI();
+                this.saveData();
+                this.hideShop();
+            }
+
+            async donateStars() {
+                if (this.stars >= 69) {
+                    this.status = '⭐ Звездный Король';
+                    this.stars -= 69;
+                    if (this.tg.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                    this.updateUI();
+                    this.saveData();
+                    return;
                 }
-            });
+                if (this.tg.showInvoice) {
+                    await this.tg.showInvoice('Купить статус ⭐', 'star_king_status', 'PAYMENT_PROVIDER_TOKEN', 'RUB', 69);
+                } else {
+                    this.tg.showAlert('Донат звездами доступен в Telegram Premium');
+                }
+            }
+
+            updateUI() {
+                this.elements.score.textContent = this.score.toLocaleString();
+                this.elements.status.textContent = this.status;
+                this.elements.donateBtn.textContent = `⭐ Купить звездами (${this.stars} ⭐)`;
+            }
         }
 
-        tg.ready();
-        tg.expand();
-        load();
+        window.Telegram?.WebApp.ready();
+        new KingClicker();
     </script>
 </body>
 </html>
