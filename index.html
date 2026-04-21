@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -355,3 +356,543 @@
             border-radius: 24px;
             font-size: 24px;
             font-weight:
+                900;
+            text-shadow: 0 30px 100px rgba(0,0,0,0.8);
+            z-index: 1000;
+            text-align: center;
+        }
+        .achievement-popup {
+            animation: achievementPop 0.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+        }
+        @keyframes achievementPop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .ref-link {
+            background: rgba(0,255,0,0.2);
+            border: 2px solid rgba(0,255,0,0.5);
+            padding: 12px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin: 12px 0;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="tabs">
+        <div class="tab active" data-tab="clicker">👑 Кликер</div>
+        <div class="tab" data-tab="shop">🛒 Статусы</div>
+        <div class="tab" data-tab="prestige">⭐ Престиж</div>
+        <div class="tab" data-tab="leaderboard">🏆 Лидеры</div>
+        <div class="tab" data-tab="referral">🔗 Рефералы</div>
+    </div>
+    <div class="content">
+        <div id="clicker-tab" class="tab-content active">
+            <div class="clicker-tab">
+                <div class="status" id="status">Крестьянин</div>
+                <div class="score" id="score">0</div>
+                <div class="total-score" id="totalScore">Всего кликов: 0</div>
+                <div class="crown" id="crown" touch-action="manipulation">👑</div>
+                <div class="buttons">
+                    <button class="btn random-btn" id="randomBtn">🎲 Рандом статус</button>
+                    <button class="btn donate-btn" id="donateBtn">⭐ Купить звезду (1000⭐ = 10000👑)</button>
+                    <button class="btn prestige-btn" id="prestigeBtn" style="display:none;">💎 Престиж за звезды (500⭐)</button>
+                </div>
+            </div>
+        </div>
+        <div id="shop-tab" class="tab-content">
+            <div class="shop-tab">
+                <h2 style="font-size:28px;margin-bottom:30px;text-align:center;font-weight:900;text-shadow:0 4px 20px rgba(0,0,0,0.5);">Выбери свой статус</h2>
+                <div class="shop-grid" id="statusGrid"></div>
+            </div>
+        </div>
+        <div id="prestige-tab" class="tab-content">
+            <div class="shop-tab" style="text-align:center;">
+                <h2 style="font-size:28px;margin-bottom:40px;font-weight:900;">🌌 Престиж система</h2>
+                <div style="background:rgba(255,255,255,0.1);backdrop-filter:blur(20px);border-radius:24px;padding:40px;margin:20px;border:2px solid rgba(255,255,255,0.2);">
+                    <div style="font-size:22px;margin-bottom:20px;">Уровень престижа: <span id="prestigeLevel">0</span></div>
+                    <div style="font-size:20px;margin-bottom:30px;color:rgba(255,215,0,1);">Множитель: <span id="prestigeMultiplier">1x</span></div>
+                    <div style="font-size:18px;margin-bottom:20px;">Кликов до следующего уровня: <span id="prestigeProgress">0</span> / 10,000,000 кликов</div>
+                    <div class="progress-bar"><div class="progress-fill" id="prestigeProgressBar"></div></div>
+                </div>
+            </div>
+        </div>
+        <div id="leaderboard-tab" class="tab-content">
+            <div class="leaderboard-tab">
+                <h2 style="font-size:28px;margin-bottom:30px;text-align:center;font-weight:900;">🏆 Топ 50 игроков</h2>
+                <div class="leaderboard-grid" id="leaderboardGrid"></div>
+            </div>
+        </div>
+        <div id="referral-tab" class="tab-content">
+            <div class="referral-tab">
+                <h2 style="font-size:28px;margin-bottom:20px;text-align:center;font-weight:900;">🔗 Реферальная программа</h2>
+                <div class="referral-grid" id="referralGrid">
+                    <div class="referral-card">
+                        <h3 style="margin-bottom:16px;">Твоя реферальная ссылка:</h3>
+                        <div class="ref-link" id="refLink">https://t.me/kingclickerbot?start=ref_player1</div>
+                        <button class="btn" style="margin-top:16px;" id="copyRef">📋 Копировать</button>
+                    </div>
+                    <div class="referral-card">
+                        <h3 style="margin-bottom:16px;">Приглашено игроков: <span id="refCount">0</span></h3>
+                        <div style="font-size:18px;margin-bottom:16px;">Звезд за рефералов: <span id="refStars">0</span> ⭐</div>
+                        <button class="btn" id="claimRefStars">⭐ Забрать звезды</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="particles" id="particles"></div>
+
+    <script>
+        class KingClickerElite {
+            constructor() {
+                this.playerId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+                this.score = 0;                    // очки именно за клики
+                this.totalClicks = 0;              // суммарные клики
+                this.status = 'Крестьянин';
+                this.stars = 0;                     // валютка доната
+                this.ownedStatuses = ['Крестьянин'];
+                this.prestigeLevel = 0;
+                this.prestigeMultiplier = 1;
+                this.refCount = 0;
+                this.refStars = 0;
+                this.statuses = [
+                    {name:'Крестьянин',          emoji:'🌾', multiplier:1,   unlock:0},
+                    {name:'⚔️ Воин',             emoji:'⚔️', multiplier:3,   unlock:1000},
+                    {name:'🛡️ Рыцарь',           emoji:'🛡️', multiplier:6,   unlock:5000},
+                    {name:'👑 Король',           emoji:'👑', multiplier:12,  unlock:20000},
+                    {name:'💎 Алмаз',            emoji:'💎', multiplier:24,  unlock:80000},
+                    {name:'🔥 Легенда',          emoji:'🔥', multiplier:48,  unlock:300000},
+                    {name:'🌟 Миф',              emoji:'🌟', multiplier:96,  unlock:1000000},
+                    {name:'⚡ Бог',               emoji:'⚡', multiplier:192, unlock:3000000},
+                    {name:'🌀 Вихрь',             emoji:'🌀', multiplier:384, unlock:10000000},
+                    {name:'🌌 Космос',           emoji:'🌌', multiplier:768, unlock:30000000},
+                    {name:'⭐ Император',         emoji:'⭐', multiplier:1536,unlock:100000000},
+                    {name:'💀 Король Мира',      emoji:'💀', multiplier:3072,unlock:300000000},
+                    {name:'🦚 Магнат',           emoji:'🦚', multiplier:6144,unlock:1000000000},
+                    {name:'🌋 Бог Времени',      emoji:'🌋', multiplier:12288,unlock:3000000000},
+                    {name:'☄️ Создатель Вселенной',emoji:'☄️',multiplier:24576,unlock:10000000000},
+                    {name:'🪐 Всевышний',        emoji:'🪐', multiplier:49152,unlock:30000000000},
+                    {name:'🕊️ Владыка Небес',   emoji:'🕊️', multiplier:98304,unlock:100000000000},
+                    {name:'🔥 Бог Всех Богов',   emoji:'🔥', multiplier:196608,unlock:300000000000},
+                    {name:'👑 Король Времени и Пространства',emoji:'👑',multiplier:393216,unlock:1000000000000}
+                ];
+                this.init();
+            }
+
+            init() {
+                this.tg = window.Telegram?.WebApp;
+                if (this.tg) {
+                    this.tg.ready();
+                    this.tg.expand();
+                    this.initRef();
+                }
+
+                this.elements = {
+                    tabs: document.querySelectorAll('.tab'),
+                    tabContents: document.querySelectorAll('.tab-content'),
+                    status: document.getElementById('status'),
+                    score: document.getElementById('score'),
+                    totalScore: document.getElementById('totalScore'),
+                    crown: document.getElementById('crown'),
+                    randomBtn: document.getElementById('randomBtn'),
+                    donateBtn: document.getElementById('donateBtn'),
+                    prestigeBtn: document.getElementById('prestigeBtn'),
+                    statusGrid: document.getElementById('statusGrid'),
+                    prestigeLevel: document.getElementById('prestigeLevel'),
+                    prestigeMultiplier: document.getElementById('prestigeMultiplier'),
+                    prestigeProgress: document.getElementById('prestigeProgress'),
+                    prestigeProgressBar: document.getElementById('prestigeProgressBar'),
+                    particles: document.getElementById('particles'),
+                    leaderboardGrid: document.getElementById('leaderboardGrid'),
+                    refLink: document.getElementById('refLink'),
+                    refCount: document.getElementById('refCount'),
+                    refStars: document.getElementById('refStars'),
+                    copyRef: document.getElementById('copyRef'),
+                    claimRefStars: document.getElementById('claimRefStars')
+                };
+
+                this.loadData();
+                this.bindEvents();
+                this.renderShop();
+                this.renderLeaderboard();
+                this.updateUI();
+            }
+
+            initRef() {
+                const ref = new URLSearchParams(window.location.search).get('start');
+                if (ref && ref.startsWith('ref_')) {
+                    this.refCount++;
+                    this.refStars += 10;
+                    this.saveData();
+                }
+                this.elements.refLink.textContent = `https://t.me/${this.tg?.initDataUnsafe?.username || 'kingclicker'}?start=ref_${this.playerId}`;
+            }
+
+            addRefStar() {
+                this.refStars += 10;
+                this.saveData();
+                this.updateUI();
+            }
+
+            bindEvents() {
+                const crown = this.elements.crown;
+                const self = this;
+
+                crown.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    self.handleCrownClick(e);
+                }, { passive: false });
+                crown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, { passive: false });
+
+                let activeTouches = 0;
+                crown.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    activeTouches = e.touches.length;
+                    self.handleCrownClick(e.touches[0]);
+                }, { passive: false });
+                crown.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    if (activeTouches >= 2) {
+                        self.multiClick();
+                    }
+                    activeTouches = 0;
+                }, { passive: false });
+
+                this.elements.randomBtn.onclick = () => this.randomStatus();
+                this.elements.donateBtn.onclick = () => this.buyStars();
+                this.elements.prestigeBtn.onclick = () => this.buyPrestigeStars();
+                this.elements.copyRef.onclick = () => this.copyRefLink();
+                this.elements.claimRefStars.onclick = () => this.claimRefStars();
+                this.elements.tabs.forEach(tab => tab.onclick = (e) => this.switchTab(e));
+            }
+
+            copyRefLink() {
+                navigator.clipboard.writeText(this.elements.refLink.textContent);
+                this.showAchievement('📋 Ссылка скопирована!');
+            }
+
+            claimRefStars() {
+                if (this.refStars > 0) {
+                    this.stars += this.refStars;
+                    this.refStars = 0;
+                    this.saveData();
+                    this.updateUI();
+                    this.showAchievement(`⭐ +${this.stars} звезд!`);
+                }
+            }
+
+            switchTab(e) {
+                const tab = e.currentTarget;
+                const target = tab.dataset.tab;
+                this.elements.tabs.forEach(t => t.classList.remove('active'));
+                this.elements.tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(target + '-tab').classList.add('active');
+            }
+
+            handleCrownClick(touchEvent) {
+                this.score += this.getMultiplier();
+                this.totalClicks += 1;
+                
+                this.elements.crown.classList.add('clicked');
+                setTimeout(() => this.elements.crown.classList.remove('clicked'), 250);
+
+                const rect = this.elements.crown.getBoundingClientRect();
+                const clientX = touchEvent.clientX || rect.left + rect.width / 2;
+                const clientY = touchEvent.clientY || rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => this.createParticle(clientX, clientY), i * 50);
+                }
+
+                if (this.tg?.HapticFeedback) {
+                    this.tg.HapticFeedback.impactOccurred('heavy');
+                }
+
+                this.checkAchievements();
+                this.updateUI();
+                this.saveData();
+            }
+
+            multiClick() {
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        this.score += this.getMultiplier() * 0.3;
+                        this.totalClicks += 1;
+                    }, i * 30);
+                }
+                if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                this.updateUI();
+                this.saveData();
+            }
+
+            buyStars() {
+                if (this.score >= 10000) {
+                    this.score -= 10000;
+                    this.stars += 1000;
+                    this.saveData();
+                    this.updateUI();
+                    this.showAchievement('⭐ +1000 звезд! (10к кликов)');
+                } else {
+                    this.showAchievement('👎 Недостаточно кликов (нужно 10000)');
+                }
+            }
+
+            buyPrestigeStars() {
+                if (this.stars >= 500) {
+                    this.stars -= 500;
+                    this.prestigeLevel++;
+                    this.prestigeMultiplier *= 2;
+                    this.saveData();
+                    this.updateUI();
+                    this.showAchievement(`🚀 Престиж ${this.prestigeLevel}! x${this.prestigeMultiplier}`);
+                }
+            }
+
+            async loadData() {
+                const keys = [
+                    'score','totalClicks','status','stars','ownedStatuses',
+                    'prestigeLevel','prestigeMultiplier','refCount','refStars'
+                ];
+                try {
+                    if (this.tg?.CloudStorage) {
+                        const data = await this.tg.CloudStorage.get(keys);
+                        Object.keys(data).forEach(key => {
+                            if (data[key]) this[key] = JSON.parse(data[key]);
+                        });
+                    } else {
+                        keys.forEach(key => {
+                            const value = localStorage.getItem(`kingclicker_${this.playerId}_${key}`);
+                            if (value) this[key] = JSON.parse(value);
+                        });
+                    }
+                    this.score = parseFloat(this.score) || 0;
+                    this.totalClicks = parseInt(this.totalClicks) || 0;
+                    this.stars = parseInt(this.stars) || 0;
+                    this.ownedStatuses = this.ownedStatuses || ['Крестьянин'];
+                    this.prestigeLevel = parseInt(this.prestigeLevel) || 0;
+                    this.prestigeMultiplier = parseFloat(this.prestigeMultiplier) || 1;
+                    this.status = this.status && this.ownedStatuses.includes(this.status) ? this.status : 'Крестьянин';
+                    this.refCount = parseInt(this.refCount) || 0;
+                    this.refStars = parseInt(this.refStars) || 0;
+                } catch (e) {
+                    console.error('Load error:', e);
+                }
+            }
+
+            async saveData() {
+                const data = {
+                    score: this.score,
+                    totalClicks: this.totalClicks,
+                    status: this.status,
+                    stars: this.stars,
+                    ownedStatuses: this.ownedStatuses,
+                    prestigeLevel: this.prestigeLevel,
+                    prestigeMultiplier: this.prestigeMultiplier,
+                    refCount: this.refCount,
+                    refStars: this.refStars
+                };
+                
+                try {
+                    if (this.tg?.CloudStorage) {
+                        await this.tg.CloudStorage.set(data);
+                    } else {
+                        Object.entries(data).forEach(([key, value]) => {
+                            localStorage.setItem(`kingclicker_${this.playerId}_${key}`, JSON.stringify(value));
+                        });
+                    }
+                } catch (e) {
+                    console.error('Save error:', e);
+                }
+            }
+
+            getMultiplier
+                        getMultiplier() {
+                const status = this.statuses.find(s => s.name === this.status);
+                return (status ? status.multiplier : 1) * this.prestigeMultiplier;
+            }
+
+            createParticle(x, y, emoji = '⭐') {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.innerHTML = emoji;
+                particle.style.left = (x - 12) + 'px';
+                particle.style.top = (y - 12) + 'px';
+                particle.style.fontSize = '28px';
+                this.elements.particles.appendChild(particle);
+                setTimeout(() => {
+                    if (particle.parentNode) particle.remove();
+                }, 1000);
+            }
+
+            checkAchievements() {
+                const milestones = [1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000];
+                for (const milestone of milestones) {
+                    if (this.totalClicks >= milestone && !localStorage.getItem(`achieved_${this.playerId}_${milestone}`)) {
+                        localStorage.setItem(`achieved_${this.playerId}_${milestone}`, 'true');
+                        this.showAchievement(`🎉 ${milestone.toLocaleString()} кликов!`);
+                    }
+                }
+            }
+
+            showAchievement(message) {
+                const popup = document.createElement('div');
+                popup.className = 'achievement-popup';
+                popup.textContent = message;
+                document.body.appendChild(popup);
+                if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                setTimeout(() => {
+                    popup.style.animation = 'none';
+                    popup.style.transform = 'translate(-50%, -50%) scale(0)';
+                    setTimeout(() => {
+                        if (popup.parentNode) document.body.removeChild(popup);
+                    }, 300);
+                }, 3000);
+            }
+
+            randomStatus() {
+                const available = this.statuses.filter(s => this.ownedStatuses.includes(s.name) && s.name !== this.status);
+                if (available.length > 0) {
+                    const random = available[Math.floor(Math.random() * available.length)];
+                    this.status = random.name;
+                    this.createParticle(window.innerWidth/2, 100, random.emoji);
+                    if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                    this.updateUI();
+                    this.saveData();
+                }
+            }
+
+            renderShop() {
+                this.elements.statusGrid.innerHTML = '';
+                this.statuses.forEach((status) => {
+                    const isOwned = this.ownedStatuses.includes(status.name);
+                    const isActive = this.status === status.name;
+                    const canAfford = this.totalClicks >= status.unlock;
+                    const purchaseable = !isOwned && canAfford;
+
+                    const card = document.createElement('div');
+                    card.className = [
+                        'status-card',
+                        isActive ? 'active' : '',
+                        isOwned ? 'purchased' : '',
+                        !isOwned && !canAfford ? 'locked' : ''
+                    ].filter(Boolean).join(' ');
+
+                    let priceText = '';
+                    let progressText = '';
+                    if (isOwned) {
+                        priceText = isActive ? '✅ Активен' : '🔓 Куплен';
+                    } else if (purchaseable) {
+                        priceText = '✅ Купить';
+                        progressText = `Кликните, чтобы получить ${status.name}`;
+                    } else {
+                        const left = Math.max(0, status.unlock - this.totalClicks);
+                        priceText = `🔒 ${status.unlock.toLocaleString()} кликов`;
+                        progressText = `Осталось: ${left.toLocaleString()}`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="status-emoji">${status.emoji}</div>
+                        <div class="status-name">${status.name}</div>
+                        <div class="status-price ${isOwned ? 'purchased' : (!isOwned && !canAfford ? 'locked' : '')}">${priceText}</div>
+                        ${progressText ? `<div class="status-progress">${progressText}</div>` : ''}
+                        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100, this.totalClicks / status.unlock * 100)}%;"></div></div>
+                    `;
+
+                    card.onclick = () => {
+                        if (isOwned && !isActive) {
+                            this.status = status.name;
+                            this.createParticle(card.offsetLeft + card.offsetWidth/2, card.offsetTop + 50, status.emoji);
+                            if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                            this.updateUI();
+                            this.saveData();
+                        } else if (!isOwned && this.totalClicks >= status.unlock) {
+                            this.ownedStatuses.push(status.name);
+                            this.status = status.name;
+                            this.createParticle(card.offsetLeft + card.offsetWidth/2, card.offsetTop + 50, status.emoji);
+                            if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                            this.updateUI();
+                            this.saveData();
+                        }
+                    };
+                    this.elements.statusGrid.appendChild(card);
+                });
+            }
+
+            renderLeaderboard() {
+                const players = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('kingclicker_') && key.includes('_totalClicks')) {
+                        try {
+                            const parts = key.split('_');
+                            const id = parts[1];
+                            const score = parseFloat(localStorage.getItem(`kingclicker_${id}_totalClicks`) || '0');
+                            const status = localStorage.getItem(`kingclicker_${id}_status`) || 'Крестьянин';
+                            players[id] = {
+                                id,
+                                score,
+                                status
+                            };
+                        } catch(e) {}
+                    }
+                }
+                const list = Object.values(players)
+                    .sort((a,b) => b.score - a.score)
+                    .slice(0,50);
+                this.elements.leaderboardGrid.innerHTML = '';
+                list.forEach((player, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    const rankColor = index === 0 ? 'color:gold;font-weight:bold;' : index < 3 ? 'color:#e6c000;' : '';
+                    item.innerHTML = `
+                        <div class="leaderboard-rank" style="${rankColor}">#${index+1}</div>
+                        <div>ID: ${player.id.slice(-8)}</div>
+                        <div>Кликов: ${player.score.toLocaleString()}</div>
+                        <div>Статус: ${(player.status || 'Крестьянин').substring(0,20)}</div>
+                    `;
+                    this.elements.leaderboardGrid.appendChild(item);
+                });
+            }
+
+            updateUI() {
+                this.elements.score.textContent = Math.floor(this.score).toLocaleString();
+                this.elements.status.textContent = this.status;
+                this.elements.totalScore.textContent = `Всего кликов: ${this.totalClicks.toLocaleString()}`;
+
+                this.elements.prestigeLevel.textContent = this.prestigeLevel;
+                this.elements.prestigeMultiplier.textContent = `x${this.prestigeMultiplier.toFixed(1)}`;
+                const nextPrestige = 10000000 * Math.pow(8, this.prestigeLevel);
+                this.elements.prestigeProgress.textContent = `${this.totalClicks.toLocaleString()} / ${Math.floor(nextPrestige).toLocaleString()} кликов`;
+                const progress = Math.min((this.totalClicks / nextPrestige) * 100, 100);
+                this.elements.prestigeProgressBar.style.width = progress + '%';
+                this.elements.prestigeBtn.style.display = this.stars >= 500 ? 'block' : 'none';
+
+                this.elements.refCount.textContent = this.refCount;
+                this.elements.refStars.textContent = this.refStars;
+
+                this.renderShop();
+                this.renderLeaderboard();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                window.Telegram?.WebApp?.ready();
+                new KingClickerElite();
+            });
+        } else {
+            window.Telegram?.WebApp?.ready();
+            new KingClickerElite();
+        }
+    </script>
+</body>
+</html>
