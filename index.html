@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -88,7 +89,7 @@
             text-align: center; 
             height: 100%;
         }
-        .shop-tab { padding: 30px 20px; height: 100%; overflow-y: auto; }
+        .shop-tab, .leaderboard-tab, .referral-tab { padding: 30px 20px; height: 100%; overflow-y: auto; }
         .status { 
             font-size: 32px; 
             font-weight: 900; 
@@ -219,6 +220,35 @@
             border-color: rgba(255,217,61,0.6);
             font-weight: 800;
         }
+        .prestige-btn {
+            background: linear-gradient(145deg, rgba(128,0,128,0.4), rgba(75,0,130,0.3));
+            border-color: rgba(255,20,147,0.6);
+        }
+        .leaderboard-grid, .referral-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .leaderboard-item, .referral-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+        .leaderboard-item:hover, .referral-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-gold);
+            box-shadow: var(--card-glow);
+        }
+        .leaderboard-rank {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary-gold);
+            margin-bottom: 8px;
+        }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .shop-grid { 
@@ -294,11 +324,6 @@
             width: 0%; transition: width 0.5s ease; border-radius: 3px;
             box-shadow: 0 0 10px rgba(255,215,0,0.6);
         }
-        .prestige-btn {
-            background: linear-gradient(145deg, rgba(128,0,128,0.4), rgba(75,0,130,0.3));
-            border-color: rgba(255,20,147,0.6);
-            margin-top: 20px;
-        }
         @media (max-width: 480px) { 
             .score { font-size: 56px; } 
             .crown { font-size: 160px; } 
@@ -325,6 +350,17 @@
             50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
+        .ref-link {
+            background: rgba(0,255,0,0.2);
+            border: 2px solid rgba(0,255,0,0.5);
+            padding: 12px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin: 12px 0;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -332,6 +368,8 @@
         <div class="tab active" data-tab="clicker">👑 Кликер</div>
         <div class="tab" data-tab="shop">🛒 Статусы</div>
         <div class="tab" data-tab="prestige">⭐ Престиж</div>
+        <div class="tab" data-tab="leaderboard">🏆 Лидеры</div>
+        <div class="tab" data-tab="referral">🔗 Рефералы</div>
     </div>
     <div class="content">
         <div id="clicker-tab" class="tab-content active">
@@ -342,8 +380,8 @@
                 <div class="crown" id="crown" touch-action="manipulation">👑</div>
                 <div class="buttons">
                     <button class="btn random-btn" id="randomBtn">🎲 Рандом статус</button>
-                    <button class="btn donate-btn" id="donateBtn">⭐ Звезды (<span id="starsCount">0</span> ⭐)</button>
-                    <button class="btn prestige-btn" id="prestigeBtn" style="display:none;">💎 Престиж (x2)</button>
+                    <button class="btn donate-btn" id="donateBtn">⭐ Купить звезду (50⭐ = 1000⭐)</button>
+                    <button class="btn prestige-btn" id="prestigeBtn" style="display:none;">💎 Престиж за звезды (100⭐)</button>
                 </div>
             </div>
         </div>
@@ -361,7 +399,29 @@
                     <div style="font-size:20px;margin-bottom:30px;color:rgba(255,215,0,1);">Множитель: <span id="prestigeMultiplier">1x</span></div>
                     <div style="font-size:18px;margin-bottom:20px;">До следующего уровня: <span id="prestigeProgress">0</span> / 1,000,000 кликов</div>
                     <div class="progress-bar"><div class="progress-fill" id="prestigeProgressBar"></div></div>
-                    <button class="btn" style="margin-top:30px;font-size:22px;padding:24px 40px;" id="claimPrestige">🚀 Получить престиж!</button>
+                </div>
+            </div>
+        </div>
+        <div id="leaderboard-tab" class="tab-content">
+            <div class="leaderboard-tab">
+                <h2 style="font-size:28px;margin-bottom:30px;text-align:center;font-weight:900;">🏆 Топ игроков</h2>
+                <div class="leaderboard-grid" id="leaderboardGrid"></div>
+            </div>
+        </div>
+        <div id="referral-tab" class="tab-content">
+            <div class="referral-tab">
+                <h2 style="font-size:28px;margin-bottom:20px;text-align:center;font-weight:900;">🔗 Реферальная программа</h2>
+                <div class="referral-grid" id="referralGrid">
+                    <div class="referral-card">
+                        <h3 style="margin-bottom:16px;">Твоя реферальная ссылка:</h3>
+                        <div class="ref-link" id="refLink">https://t.me/kingclickerbot?start=ref_player1</div>
+                        <button class="btn" style="margin-top:16px;" id="copyRef">📋 Копировать</button>
+                    </div>
+                    <div class="referral-card">
+                        <h3 style="margin-bottom:16px;">Приглашено игроков: <span id="refCount">0</span></h3>
+                        <div style="font-size:18px;margin-bottom:16px;">Звезд за рефералов: <span id="refStars">0</span> ⭐</div>
+                        <button class="btn" id="claimRefStars">⭐ Забрать звезды</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -371,12 +431,16 @@
     <script>
         class KingClickerElite {
             constructor() {
+                this.playerId = Date.now().toString(36) + Math.random().toString(36).substr(2);
                 this.score = 0;
                 this.totalClicks = 0;
                 this.status = 'Крестьянин';
                 this.stars = 0;
+                this.ownedStatuses = ['Крестьянин'];
                 this.prestigeLevel = 0;
                 this.prestigeMultiplier = 1;
+                this.refCount = 0;
+                this.refStars = 0;
                 this.statuses = [
                     {name:'Крестьянин', emoji:'🌾', price:0, multiplier:1},
                     {name:'⚔️ Воин', emoji:'⚔️', price:250, multiplier:2},
@@ -399,6 +463,7 @@
                 if (this.tg) {
                     this.tg.ready();
                     this.tg.expand();
+                    this.initRef();
                 }
 
                 this.elements = {
@@ -410,29 +475,47 @@
                     crown: document.getElementById('crown'),
                     randomBtn: document.getElementById('randomBtn'),
                     donateBtn: document.getElementById('donateBtn'),
-                    starsCount: document.getElementById('starsCount'),
-                    statusGrid: document.getElementById('statusGrid'),
                     prestigeBtn: document.getElementById('prestigeBtn'),
+                    starsCount: document.querySelector('#donateBtn span'),
+                    statusGrid: document.getElementById('statusGrid'),
                     prestigeLevel: document.getElementById('prestigeLevel'),
                     prestigeMultiplier: document.getElementById('prestigeMultiplier'),
                     prestigeProgress: document.getElementById('prestigeProgress'),
                     prestigeProgressBar: document.getElementById('prestigeProgressBar'),
                     particles: document.getElementById('particles'),
-                    claimPrestige: document.getElementById('claimPrestige')
+                    leaderboardGrid: document.getElementById('leaderboardGrid'),
+                    refLink: document.getElementById('refLink'),
+                    refCount: document.getElementById('refCount'),
+                    refStars: document.getElementById('refStars'),
+                    copyRef: document.getElementById('copyRef'),
+                    claimRefStars: document.getElementById('claimRefStars')
                 };
 
                 this.loadData();
                 this.bindEvents();
                 this.renderShop();
+                this.renderLeaderboard();
+                this.updateUI();
+            }
+
+            initRef() {
+                const ref = new URLSearchParams(window.location.search).get('start');
+                if (ref && ref.startsWith('ref_')) {
+                    this.addRefStar();
+                }
+                this.elements.refLink.textContent = `https://t.me/${this.tg?.initDataUnsafe?.username || 'kingclicker'}?start=ref_${this.playerId}`;
+            }
+
+            addRefStar() {
+                this.refStars += 10;
+                this.saveData();
                 this.updateUI();
             }
 
             bindEvents() {
-                // Universal click handler for crown - работает и на PC и на мобильных
                 const crown = this.elements.crown;
                 const self = this;
 
-                // Mouse events
                 crown.addEventListener('mousedown', function(e) {
                     e.preventDefault();
                     self.handleCrownClick(e);
@@ -442,14 +525,11 @@
                     e.stopPropagation();
                 });
 
-                // Touch events с мультитачем
                 let activeTouches = 0;
                 crown.addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     activeTouches = e.touches.length;
-                    if (activeTouches >= 1) {
-                        self.handleCrownClick(e.touches[0]);
-                    }
+                    self.handleCrownClick(e.touches[0]);
                 }, { passive: false });
 
                 crown.addEventListener('touchend', function(e) {
@@ -460,24 +540,45 @@
                     activeTouches = 0;
                 }, { passive: false });
 
-                // Остальные кнопки
                 this.elements.randomBtn.onclick = () => this.randomStatus();
-                this.elements.donateBtn.onclick = () => this.donateStars();
-                this.elements.prestigeBtn.onclick = () => this.quickPrestige();
-                this.elements.claimPrestige.onclick = () => this.claimPrestige();
+                this.elements.donateBtn.onclick = () => this.buyStars();
+                this.elements.prestigeBtn.onclick = () => this.buyPrestigeStars();
+                this.elements.copyRef.onclick = () => this.copyRefLink();
+                this.elements.claimRefStars.onclick = () => this.claimRefStars();
                 this.elements.tabs.forEach(tab => tab.onclick = (e) => this.switchTab(e));
             }
 
+            copyRefLink() {
+                navigator.clipboard.writeText(this.elements.refLink.textContent);
+                this.showAchievement('📋 Ссылка скопирована!');
+            }
+
+            claimRefStars() {
+                if (this.refStars > 0) {
+                    this.stars += this.refStars;
+                    this.refStars = 0;
+                    this.saveData();
+                    this.updateUI();
+                    this.showAchievement(`⭐ +${this.stars} звезд!`);
+                }
+            }
+
+            switchTab(e) {
+                const tab = e.currentTarget;
+                const target = tab.dataset.tab;
+                this.elements.tabs.forEach(t => t.classList.remove('active'));
+                this.elements.tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(target + '-tab').classList.add('active');
+            }
+
             handleCrownClick(touchEvent) {
-                const multiplier = this.getMultiplier();
-                const clickValue = Math.floor(multiplier);
-                this.score += clickValue;
+                this.score += this.getMultiplier();
                 this.totalClicks += 1;
                 
                 this.elements.crown.classList.add('clicked');
                 setTimeout(() => this.elements.crown.classList.remove('clicked'), 250);
 
-                // Particles
                 const rect = this.elements.crown.getBoundingClientRect();
                 const clientX = touchEvent.clientX || rect.left + rect.width / 2;
                 const clientY = touchEvent.clientY || rect.top + rect.height / 2;
@@ -495,17 +596,43 @@
                 this.saveData();
             }
 
-            switchTab(e) {
-                const tab = e.currentTarget;
-                const target = tab.dataset.tab;
-                this.elements.tabs.forEach(t => t.classList.remove('active'));
-                this.elements.tabContents.forEach(c => c.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(target + '-tab').classList.add('active');
+            multiClick() {
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        this.score += this.getMultiplier() * 0.3;
+                        this.totalClicks += 1;
+                    }, i * 30);
+                }
+                if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                this.updateUI();
+                this.saveData();
+            }
+
+            buyStars() {
+                if (this.stars >= 50) {
+                    this.stars = this.stars - 50 + 1000;
+                    this.saveData();
+                    this.updateUI();
+                    this.showAchievement('⭐ +1000 звезд!');
+                }
+            }
+
+            buyPrestigeStars() {
+                if (this.stars >= 100) {
+                    this.stars -= 100;
+                    this.prestigeLevel++;
+                    this.prestigeMultiplier *= 2;
+                    this.saveData();
+                    this.updateUI();
+                    this.showAchievement(`🚀 Престиж ${this.prestigeLevel}! x${this.prestigeMultiplier}`);
+                }
             }
 
             async loadData() {
-                const keys = ['score','totalClicks','status','stars','prestigeLevel','prestigeMultiplier'];
+                const keys = [
+                    'score','totalClicks','status','stars','ownedStatuses',
+                    'prestigeLevel','prestigeMultiplier','refCount','refStars'
+                ];
                 try {
                     if (this.tg?.CloudStorage) {
                         const data = await this.tg.CloudStorage.get(keys);
@@ -514,16 +641,19 @@
                         });
                     } else {
                         keys.forEach(key => {
-                            const value = localStorage.getItem(`kingclicker_${key}`);
+                            const value = localStorage.getItem(`kingclicker_${this.playerId}_${key}`);
                             if (value) this[key] = JSON.parse(value);
                         });
                     }
-                    this.score = parseInt(this.score) || 0;
+                    this.score = parseFloat(this.score) || 0;
                     this.totalClicks = parseInt(this.totalClicks) || 0;
                     this.stars = parseInt(this.stars) || 0;
+                    this.ownedStatuses = this.ownedStatuses || ['Крестьянин'];
                     this.prestigeLevel = parseInt(this.prestigeLevel) || 0;
                     this.prestigeMultiplier = parseFloat(this.prestigeMultiplier) || 1;
-                    this.status = this.status || 'Крестьянин';
+                    this.status = this.status && this.ownedStatuses.includes(this.status) ? this.status : 'Крестьянин';
+                    this.refCount = parseInt(this.refCount) || 0;
+                    this.refStars = parseInt(this.refStars) || 0;
                 } catch (e) {
                     console.error('Load error:', e);
                 }
@@ -535,8 +665,11 @@
                     totalClicks: this.totalClicks,
                     status: this.status,
                     stars: this.stars,
+                    ownedStatuses: this.ownedStatuses,
                     prestigeLevel: this.prestigeLevel,
-                    prestigeMultiplier: this.prestigeMultiplier
+                    prestigeMultiplier: this.prestigeMultiplier,
+                    refCount: this.refCount,
+                    refStars: this.refStars
                 };
                 
                 try {
@@ -544,7 +677,7 @@
                         await this.tg.CloudStorage.set(data);
                     } else {
                         Object.entries(data).forEach(([key, value]) => {
-                            localStorage.setItem(`kingclicker_${key}`, JSON.stringify(value));
+                            localStorage.setItem(`kingclicker_${this.playerId}_${key}`, JSON.stringify(value));
                         });
                     }
                 } catch (e) {
@@ -570,25 +703,12 @@
                 }, 1000);
             }
 
-            multiClick() {
-                const multiplier = this.getMultiplier();
-                for (let i = 0; i < 10; i++) {
-                    setTimeout(() => {
-                        this.score += Math.floor(multiplier * 0.3);
-                        this.totalClicks += 1;
-                    }, i * 30);
-                }
-                if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
-                this.updateUI();
-                this.saveData();
-            }
-
             checkAchievements() {
                 const milestones = [1000, 10000, 100000, 1000000, 10000000];
                 for (const milestone of milestones) {
-                    if (this.totalClicks >= milestone && !localStorage.getItem(`achieved_${milestone}`)) {
-                        localStorage.setItem(`achieved_${milestone}`, 'true');
-                        this.showAchievement(`🎉 Достижение: ${milestone.toLocaleString()} кликов!`);
+                    if (this.totalClicks >= milestone && !localStorage.getItem(`achieved_${this.playerId}_${milestone}`)) {
+                        localStorage.setItem(`achieved_${this.playerId}_${milestone}`, 'true');
+                        this.showAchievement(`🎉 ${milestone.toLocaleString()} кликов!`);
                     }
                 }
             }
@@ -609,7 +729,7 @@
             }
 
             randomStatus() {
-                const available = this.statuses.filter(s => this.score >= s.price);
+                const available = this.statuses.filter(s => this.ownedStatuses.includes(s.name));
                 if (available.length > 1) {
                     const random = available[Math.floor(Math.random() * available.length)];
                     this.status = random.name;
@@ -620,61 +740,34 @@
                 }
             }
 
-            donateStars() {
-                if (this.stars >= 100) {
-                    this.status = '⭐ Звездный Император';
-                    this.stars -= 100;
-                    this.createParticle(window.innerWidth/2, 150, '⭐');
-                    if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
-                    this.updateUI();
-                    this.saveData();
-                }
-            }
-
-            quickPrestige() {
-                this.claimPrestige();
-            }
-
-            claimPrestige() {
-                const requiredClicks = 1000000 * Math.pow(1.5, this.prestigeLevel);
-                if (this.totalClicks >= requiredClicks) {
-                    this.prestigeLevel++;
-                    this.prestigeMultiplier *= 2;
-                    this.score = 0;
-                    this.totalClicks = 0;
-                    this.status = 'Крестьянин';
-                    this.showAchievement(`🚀 Престиж ${this.prestigeLevel}! Множитель x${this.prestigeMultiplier}`);
-                    if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
-                    this.updateUI();
-                    this.saveData();
-                }
-            }
-
             renderShop() {
                 this.elements.statusGrid.innerHTML = '';
-                this.statuses.forEach((status, index) => {
-                    const canBuy = this.score >= status.price;
-                    const isActive = status.name === this.status;
+                this.statuses.forEach((status) => {
+                    const isOwned = this.ownedStatuses.includes(status.name);
+                    const isActive = this.status === status.name;
                     const card = document.createElement('div');
-                    card.className = `status-card ${isActive ? 'active' : ''}`;
+                    card.className = `status-card ${isActive ? 'active' : ''} ${!isOwned ? 'locked' : ''}`;
                     
-                    const progress = Math.min((this.score / status.price) * 100, 100);
                     card.innerHTML = `
                         <div class="status-emoji">${status.emoji}</div>
                         <div class="status-name">${status.name}</div>
-                        <div class="status-price ${!canBuy ? 'locked' : ''}">
-                            ${isActive ? '✅ Активно' : `${status.price.toLocaleString()} 👑`}
+                        <div class="status-price">
+                            ${isActive ? '✅ Активно' : isOwned ? '🔓 Куплено' : `${status.price.toLocaleString()} 👑`}
                         </div>
-                        ${!isActive && status.price > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>` : ''}
                     `;
                     
-                    card.onclick = (e) => {
-                        e.preventDefault();
-                        if (canBuy && !isActive) {
+                    card.onclick = () => {
+                        if (isOwned && !isActive) {
+                            this.status = status.name;
+                            this.createParticle(card.offsetLeft + card.offsetWidth/2, card.offsetTop + 50, status.emoji);
+                            if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
+                            this.updateUI();
+                            this.saveData();
+                        } else if (!isOwned && this.score >= status.price) {
+                            this.ownedStatuses.push(status.name);
                             this.score -= status.price;
                             this.status = status.name;
-                            const rect = card.getBoundingClientRect();
-                            this.createParticle(rect.left + rect.width/2, rect.top + 50, status.emoji);
+                            this.createParticle(card.offsetLeft + card.offsetWidth/2, card.offsetTop + 50, status.emoji);
                             if (this.tg?.HapticFeedback) this.tg.HapticFeedback.notificationOccurred('success');
                             this.updateUI();
                             this.saveData();
@@ -684,22 +777,51 @@
                 });
             }
 
+            renderLeaderboard() {
+                const leaderboard = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('kingclicker_') && key.includes('_totalClicks')) {
+                        try {
+                            const playerId = key.split('_')[1];
+                            const score = JSON.parse(localStorage.getItem(`kingclicker_${playerId}_totalClicks`) || '0');
+                            const status = JSON.parse(localStorage.getItem(`kingclicker_${playerId}_status`) || '"Крестьянин"');
+                            leaderboard.push({playerId, score, status});
+                        } catch(e) {}
+                    }
+                }
+                leaderboard.sort((a,b) => b.score - a.score).slice(0,10).forEach((player, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    item.innerHTML = `
+                        <div class="leaderboard-rank">#${index+1}</div>
+                        <div>ID: ${player.playerId.slice(-8)}</div>
+                        <div>Кликов: ${player.score.toLocaleString()}</div>
+                        <div>Статус: ${player.status}</div>
+                    `;
+                    this.elements.leaderboardGrid.appendChild(item);
+                });
+            }
+
             updateUI() {
                 this.elements.score.textContent = Math.floor(this.score).toLocaleString();
                 this.elements.status.textContent = this.status;
                 this.elements.totalScore.textContent = `Всего кликов: ${this.totalClicks.toLocaleString()}`;
                 this.elements.starsCount.textContent = this.stars;
                 
-                // Prestige UI
                 this.elements.prestigeLevel.textContent = this.prestigeLevel;
-                this.elements.prestigeMultiplier.textContent = `x${this.prestigeMultiplier.toFixed(0)}`;
+                this.elements.prestigeMultiplier.textContent = `x${Math.floor(this.prestigeMultiplier)}`;
                 const nextPrestige = 1000000 * Math.pow(1.5, this.prestigeLevel);
                 this.elements.prestigeProgress.textContent = `${this.totalClicks.toLocaleString()} / ${Math.floor(nextPrestige).toLocaleString()} кликов`;
                 const progress = Math.min((this.totalClicks / nextPrestige) * 100, 100);
                 this.elements.prestigeProgressBar.style.width = progress + '%';
-                this.elements.prestigeBtn.style.display = this.totalClicks >= nextPrestige ? 'block' : 'none';
+                this.elements.prestigeBtn.style.display = this.stars >= 100 ? 'block' : 'none';
+                
+                this.elements.refCount.textContent = this.refCount;
+                this.elements.refStars.textContent = this.refStars;
                 
                 this.renderShop();
+                this.renderLeaderboard();
             }
         }
 
