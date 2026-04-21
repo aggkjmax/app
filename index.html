@@ -1,11 +1,9 @@
-Вот полностью переработанный и исправленный код без комментариев и лишней воды. Все баги исправлены, работа гарантирована.
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>King Clicker Elite</title>
+    <title>King Clicker Elite - Мультитач</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -22,7 +20,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
-            touch-action: pan-y;
+            touch-action: pan-y pinch-zoom;
         }
 
         .tabs {
@@ -75,6 +73,7 @@
         .clicker-area {
             text-align: center;
             padding: 20px 0;
+            touch-action: manipulation;
         }
 
         .status-badge {
@@ -107,15 +106,17 @@
             font-size: 180px;
             cursor: pointer;
             display: inline-block;
-            transition: transform 0.08s linear;
+            transition: transform 0.06s linear;
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
             margin: 20px 0;
             width: 100%;
             text-align: center;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .crown-btn:active {
-            transform: scale(0.92);
+            transform: scale(0.94);
         }
 
         .action-buttons {
@@ -291,6 +292,19 @@
             0% { opacity: 1; transform: translateY(0) scale(1);}
             100% { opacity: 0; transform: translateY(-120px) scale(0.5) rotate(20deg);}
         }
+
+        .click-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #FFD700;
+            pointer-events: none;
+            z-index: 99;
+        }
     </style>
 </head>
 <body>
@@ -307,7 +321,7 @@
             <div class="status-badge" id="currentStatus">Крестьянин</div>
             <div class="score-display" id="scoreValue">0</div>
             <div class="total-clicks" id="totalClicksText">Всего кликов: 0</div>
-            <div class="crown-btn" id="crownButton">👑</div>
+            <div class="crown-btn" id="crownButton">https://png.klev.club/uploads/posts/2024-04/png-klev-club-jxse-p-popa-png-20.png</div>
             <div class="action-buttons">
                 <button class="btn btn-special" id="randomStatusBtn">🎲 Случайный статус</button>
                 <button class="btn" id="buyStarsBtn">⭐ Купить 1000⭐ (10,000 кликов)</button>
@@ -418,7 +432,6 @@
                 if(tg && tg.CloudStorage) {
                     tg.CloudStorage.getItem('king_save', (err, val) => {
                         if(!err && val) raw = val;
-                        else raw = null;
                         if(raw) applySave(JSON.parse(raw));
                         else applySave(null);
                         renderAll();
@@ -458,16 +471,58 @@
             return base * state.prestigeMultiplier;
         }
 
-        function addClick() {
+        let pendingParticles = 0;
+        let lastClickFrame = 0;
+
+        function addClickFromTouch(clientX, clientY) {
             let addValue = getCurrentMultiplier();
             state.clicks += addValue;
             state.totalClicks += 1;
+            
             checkStatusUnlock();
             checkPrestigeAuto();
             updateUI();
             saveGame();
-            createParticle();
+            
+            if(clientX && clientY) {
+                createParticleAt(clientX, clientY);
+            } else {
+                createParticle();
+            }
+            
             if(tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            
+            const crown = document.getElementById('crownButton');
+            if(crown) {
+                crown.style.transform = 'scale(0.94)';
+                setTimeout(() => { if(crown) crown.style.transform = ''; }, 80);
+            }
+        }
+
+        function handleMultiTouch(e) {
+            e.preventDefault();
+            const rect = document.getElementById('crownButton').getBoundingClientRect();
+            const touches = e.touches;
+            
+            for(let i = 0; i < touches.length; i++) {
+                const touch = touches[i];
+                const x = touch.clientX;
+                const y = touch.clientY;
+                
+                if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    addClickFromTouch(x, y);
+                }
+            }
+        }
+
+        function handleMouseClick(e) {
+            const crown = document.getElementById('crownButton');
+            const rect = crown.getBoundingClientRect();
+            const x = e.clientX;
+            const y = e.clientY;
+            if(x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                addClickFromTouch(x, y);
+            }
         }
 
         function checkStatusUnlock() {
@@ -589,8 +644,6 @@
                         }
                     }
                 }
-                if(tg && tg.CloudStorage) {
-                }
             } catch(e) {}
             if(players.length === 0) {
                 players.push({id: playerId.slice(0,10), clicks: state.totalClicks});
@@ -620,7 +673,8 @@
             document.getElementById('scoreValue').innerText = Math.floor(state.clicks).toLocaleString();
             document.getElementById('totalClicksText').innerHTML = `Всего кликов: ${state.totalClicks.toLocaleString()}`;
             document.getElementById('currentStatus').innerHTML = `${state.currentStatus} ${statusTree.find(s=>s.name===state.currentStatus)?.emoji || ''}`;
-            document.getElementById('prestigeUpgradeBtn').style.display = state.stars >= 500 ? 'block' : 'none';
+            const prestigeBtn = document.getElementById('prestigeUpgradeBtn');
+            if(prestigeBtn) prestigeBtn.style.display = state.stars >= 500 ? 'block' : 'none';
             document.getElementById('refCountDisplay').innerText = state.refCount;
             document.getElementById('refStarsDisplay').innerText = state.refStars;
             renderPrestige();
@@ -644,12 +698,16 @@
         }
 
         function createParticle() {
-            let container = document.getElementById('particleContainer');
             let crown = document.getElementById('crownButton');
             let rect = crown.getBoundingClientRect();
             let x = rect.left + rect.width/2;
             let y = rect.top + rect.height/2;
-            let emojis = ['✨','⭐','👑','💎','🌟'];
+            createParticleAt(x, y);
+        }
+
+        function createParticleAt(x, y) {
+            let container = document.getElementById('particleContainer');
+            let emojis = ['✨','⭐','👑','💎','🌟','⚡','🔥'];
             let particle = document.createElement('div');
             particle.className = 'particle';
             particle.innerText = emojis[Math.floor(Math.random()*emojis.length)];
@@ -681,8 +739,9 @@
             document.getElementById('claimRefBtn').onclick = () => {
                 if(state.refStars > 0) {
                     state.stars += state.refStars;
+                    const earned = state.refStars;
                     state.refStars = 0;
-                    showToast(`⭐ +${state.refStars} звезд получено!`);
+                    showToast(`⭐ +${earned} звезд получено!`);
                     updateUI();
                     saveGame();
                 } else {
@@ -692,10 +751,27 @@
         }
 
         function bindEvents() {
-            document.getElementById('crownButton').addEventListener('click', (e) => {
+            const crownElement = document.getElementById('crownButton');
+            
+            crownElement.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                addClick();
+                handleMultiTouch(e);
+            }, { passive: false });
+            
+            crownElement.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                handleMultiTouch(e);
+            }, { passive: false });
+            
+            crownElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
             });
+            
+            crownElement.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                handleMouseClick(e);
+            });
+            
             document.getElementById('randomStatusBtn').addEventListener('click', () => randomStatus());
             document.getElementById('buyStarsBtn').addEventListener('click', () => buyStars());
             document.getElementById('prestigeUpgradeBtn').addEventListener('click', () => prestigeForStars());
@@ -728,4 +804,3 @@
 </script>
 </body>
 </html>
-```
