@@ -319,16 +319,19 @@
     <div id="clicker-tab" class="tab-content active">
         <div class="clicker-area">
             <div class="status-badge" id="currentStatus">Крестьянин</div>
-            <div class="score-display" id="scoreValue">0</div>
-            <div class="total-clicks" id="totalClicksText">Всего кликов: 0</div>
-            <div class="crown-btn" id="crownButton">https://aggkjmax.github.io/app/png-klev-club-jxse-p-popa-png-20%20(1)-Photoroom.png</div>
-            <div class="action-buttons">
-                <button class="btn btn-special" id="randomStatusBtn">🎲 Случайный статус</button>
-                <button class="btn" id="buyStarsBtn">⭐ Купить 1000⭐ (10,000 кликов)</button>
-                <button class="btn" id="prestigeUpgradeBtn" style="display:none;">💎 Престиж за 500⭐</button>
-            </div>
-        </div>
-    </div>
+<div class="score-display" id="scoreValue">0</div>
+<div class="total-clicks" id="totalClicksText">Всего кликов: 0</div>
+
+<!-- Кнопка-корона теперь содержит само изображение -->
+<div class="crown-btn" id="crownButton">
+    <img src="https://aggkjmax.github.io/app/png-klev-club-jxse-p-popa-png-20%20(1)-Photoroom.png" alt="Crown" style="width: 100%; height: auto;">
+</div>
+
+<div class="action-buttons">
+    <button class="btn btn-special" id="randomStatusBtn">🎲 Случайный статус</button>
+    <button class="btn" id="buyStarsBtn">⭐ Купить 1000⭐ (10,000 кликов)</button>
+    <button class="btn" id="prestigeUpgradeBtn" style="display:none;">💎 Престиж за 500⭐</button>
+</div>
     <div id="shop-tab" class="tab-content">
         <h2 style="text-align:center; margin-bottom:20px;">🏅 Доступные статусы</h2>
         <div class="shop-grid" id="statusList"></div>
